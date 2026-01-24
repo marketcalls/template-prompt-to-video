@@ -63,7 +63,7 @@ export const createTimeLineFromStoryWithDetails = (
       characterEndTimesSeconds: character_end_times_seconds,
     } = content.audioTimestamps;
 
-    const MaxSentenseSizeChars = 14;
+    const MaxSentenseSizeChars = 35;
 
     let currentText = "";
     let currentStartMs = character_start_times_seconds[0] * 1000 + durationMs;

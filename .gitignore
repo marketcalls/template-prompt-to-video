@@ -1,11 +1,17 @@
 node_modules
 dist
+build
 .DS_Store
 .env
 package-lock.json
+nul
 
 # Ignore the output video from Git but not videos you import into src/.
 out
 
-# Ignore generated content
+# Ignore generated content (mp3, png files)
 public/content/
+
+# Ignore media files
+*.mp3
+*.mp4

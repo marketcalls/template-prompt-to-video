@@ -11,7 +11,7 @@ export const Word: React.FC<{
 }> = ({ enterProgress, text, stroke }) => {
   const { fontFamily } = loadFont();
   const { width } = useVideoConfig();
-  const desiredFontSize = 140;
+  const desiredFontSize = 72;
 
   const fittedText = fitText({
     fontFamily,
