@@ -1,7 +1,6 @@
 import z from "zod";
 import * as fs from "fs";
 import { fal } from "@fal-ai/client";
-import { IMAGE_HEIGHT, IMAGE_WIDTH } from "../src/lib/constants";
 
 export interface CharacterAlignmentResponseModel {
   characters: string[];
@@ -62,8 +61,8 @@ export const generateAiImage = async ({
   let attempt = 0;
   let lastError: Error | null = null;
 
-  // Add minimalistic style prefix to prompt
-  const styledPrompt = `Minimalistic, clean editorial illustration style. Simple composition with negative space. No text or UI elements. ${prompt}`;
+  // Add comic style prefix to prompt
+  const styledPrompt = `Comic book illustration style, vibrant colors, bold outlines, dynamic poses, expressive characters, graphic novel aesthetic. No text or speech bubbles. ${prompt}`;
 
   while (attempt < maxRetries) {
     try {
@@ -105,6 +104,12 @@ export const getGenerateStoryPrompt = (title: string, topic: string) => {
    Result result without any formatting and title, as one continuous text.
    Skip new lines.
 
+   IMPORTANT RULES:
+   - Do NOT use hyphens (-) or em-dashes (—) anywhere in the text
+   - Do NOT use ellipsis (...)
+   - Use simple punctuation only: periods, commas, question marks, exclamation marks
+   - Write complete sentences without breaking words
+
    Return your response as JSON in this exact format:
    {"text": "your story text here"}`;
 
@@ -117,20 +122,19 @@ export const getGenerateImageDescriptionPrompt = (storyText: string) => {
   Story sentences must be in the same order as in the story and their content must be preserved.
   Each image must match 1-2 sentence from the story.
 
-  IMPORTANT - MINIMALISTIC IMAGE STYLE:
-  - Keep descriptions CLEAN and SIMPLE
-  - Focus on ONE clear subject per image
-  - Use simple compositions with plenty of negative space
-  - Prefer abstract or symbolic representations
-  - Use solid colors, soft gradients, or simple backgrounds
-  - Style: Modern, clean, editorial illustration
-  - NO text, numbers, or UI elements in images
-  - NO crowded scenes or busy backgrounds
-  - NO screens with fake text or gibberish characters
-  - Think: Apple-style minimalism, not stock photography
+  IMPORTANT - COMIC BOOK STYLE WITH CHARACTERS:
+  - Style: Vibrant comic book illustration, graphic novel aesthetic
+  - Include expressive human characters with dynamic poses
+  - Use bold colors, strong outlines, and dramatic lighting
+  - Show action scenes and emotional expressions
+  - Characters should be stylized like modern comic books or anime
+  - Backgrounds should complement the action
+  - NO text, speech bubbles, or UI elements in images
+  - NO realistic photography style
+  - Think: Marvel comics, anime, or graphic novel panels
 
   Return your response as JSON in this exact format:
-  {"result": [{"text": "sentence from story", "imageDescription": "minimalistic image description"}]}
+  {"result": [{"text": "sentence from story", "imageDescription": "comic style image description with characters"}]}
 
   <story>
   ${storyText}
@@ -160,7 +164,8 @@ export const generateVoice = async (
   fs.writeFileSync(outputPath, buffer as Uint8Array);
 
   // Generate estimated timestamps based on audio duration and text length
-  const audioDurationSeconds = result.data.audio.duration || text.length * 0.06;
+  const audioData = result.data.audio as { url: string; duration?: number };
+  const audioDurationSeconds = audioData.duration || text.length * 0.06;
   const characters = text.split("");
   const timePerChar = audioDurationSeconds / characters.length;
 

@@ -1,6 +1,7 @@
 import type {
   BackgroundElement,
   ElementAnimation,
+  SentenceElement,
   StoryMetadataWithDetails,
   TextElement,
   Timeline,
@@ -13,6 +14,7 @@ export const createTimeLineFromStoryWithDetails = (
     elements: [],
     text: [],
     audio: [],
+    sentences: [],
     shortTitle: storyWithDetails.shortTitle,
   };
 
@@ -22,11 +24,13 @@ export const createTimeLineFromStoryWithDetails = (
   for (let i = 0; i < storyWithDetails.content.length; i++) {
     const content = storyWithDetails.content[i];
 
-    const lenMs = Math.ceil(
+    // Multiply estimated duration by 1.8x to match actual audio length, plus 1 sec padding
+    const estimatedDurationMs = Math.ceil(
       content.audioTimestamps.characterEndTimesSeconds[
         content.audioTimestamps.characterEndTimesSeconds.length - 1
       ] * 1000,
     );
+    const lenMs = Math.ceil(estimatedDurationMs * 1.8) + 1000;
 
     const bgElem: BackgroundElement = {
       startMs: durationMs,
@@ -44,7 +48,15 @@ export const createTimeLineFromStoryWithDetails = (
       audioUrl: content.uid,
     });
 
-    // hadnle text word by word
+    // Add full sentence for this scene (1:1 with background and audio)
+    const sentenceElem: SentenceElement = {
+      startMs: durationMs,
+      endMs: durationMs + lenMs,
+      text: content.text,
+    };
+    timeline.sentences!.push(sentenceElem);
+
+    // handle text word by word
     const words = content.text.split(" ");
     const {
       characterStartTimesSeconds: character_start_times_seconds,

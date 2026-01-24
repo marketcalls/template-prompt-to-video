@@ -77,7 +77,7 @@ export const AIVideo: React.FC<z.infer<typeof aiVideoSchema>> = ({
         </Series>
       </Sequence>
 
-      {/* Subtitles - Using absolute positioning to sync with audio */}
+      {/* Subtitles - Word-by-word with absolute positioning */}
       {timeline.text.map((element, index) => {
         const startFrame = msToFrame(element.startMs);
         const durationFrames = msToDuration(element.startMs, element.endMs);
@@ -92,21 +92,23 @@ export const AIVideo: React.FC<z.infer<typeof aiVideoSchema>> = ({
         );
       })}
 
-      {/* Audio - Using absolute positioning to ensure sync */}
-      {timeline.audio.map((element, index) => {
-        const startFrame = msToFrame(element.startMs);
-        const durationFrames = msToDuration(element.startMs, element.endMs);
-        return (
-          <Sequence
-            key={`audio-${index}`}
-            from={startFrame}
-            durationInFrames={durationFrames}
-            premountFor={fps}
-          >
-            <Audio src={staticFile(getAudioPath(id, element.audioUrl))} />
-          </Sequence>
-        );
-      })}
+      {/* Audio - Using Series for sequential non-overlapping playback */}
+      <Sequence from={INTRO_DURATION}>
+        <Series>
+          {timeline.audio.map((element, index) => {
+            const durationFrames = msToDuration(element.startMs, element.endMs);
+            return (
+              <Series.Sequence
+                key={`audio-${index}`}
+                durationInFrames={durationFrames}
+                premountFor={fps}
+              >
+                <Audio src={staticFile(getAudioPath(id, element.audioUrl))} />
+              </Series.Sequence>
+            );
+          })}
+        </Series>
+      </Sequence>
     </AbsoluteFill>
   );
 };

@@ -196,23 +196,24 @@ async function generateStory(options: GenerateOptions) {
     const imagesSpinner = ora("Generating images and voice...").start();
     for (let i = 0; i < storyWithDetails.content.length; i++) {
       const storyItem = storyWithDetails.content[i];
-      imagesSpinner.text = `[${i * 2 + 1}/${storyWithDetails.content.length * 2}] Generating image for ${storyItem.text}`;
+      imagesSpinner.text = `[${i * 2 + 1}/${storyWithDetails.content.length * 2}] Generating image for ${storyItem.text.substring(0, 50)}...`;
       await generateAiImage({
         prompt: storyItem.imageDescription,
         path: contentFs.getImagePath(storyItem.uid),
         onRetry: (attempt) => {
-          imagesSpinner.text = `[${i * 2 + 1}/${storyWithDetails.content.length * 2}] Generating image for ${storyItem.text} (retry ${attempt + 1})`;
+          imagesSpinner.text = `[${i * 2 + 1}/${storyWithDetails.content.length * 2}] Generating image (retry ${attempt})...`;
         },
       });
-      imagesSpinner.text = `[${i * 2 + 2}/${storyWithDetails.content.length * 2}] Generating voice for ${storyItem.text}`;
+      imagesSpinner.text = `[${i * 2 + 2}/${storyWithDetails.content.length * 2}] Generating voice for ${storyItem.text.substring(0, 50)}...`;
       const timings = await generateVoice(
         storyItem.text,
         contentFs.getAudioPath(storyItem.uid),
       );
       storyItem.audioTimestamps = timings;
+      // Save progress after each item to prevent data loss on interruption
+      contentFs.saveDescriptor(storyWithDetails);
     }
-    contentFs.saveDescriptor(storyWithDetails);
-    imagesSpinner.succeed(chalk.green("Images generated!"));
+    imagesSpinner.succeed(chalk.green("Images and voice generated!"));
 
     const finalSpinner = ora("Generating final result...").start();
     const timeline = createTimeLineFromStoryWithDetails(storyWithDetails);

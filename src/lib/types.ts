@@ -44,12 +44,19 @@ const AudioElementSchema = TimelineElementSchema.extend({
   audioUrl: z.string(),
 });
 
+const SentenceElementSchema = TimelineElementSchema.extend({
+  text: z.string(),
+});
+
 const TimelineSchema = z.object({
   shortTitle: z.string(),
   elements: z.array(BackgroundElementSchema),
   text: z.array(TextElementSchema),
   audio: z.array(AudioElementSchema),
+  sentences: z.array(SentenceElementSchema).optional(),
 });
+
+export type SentenceElement = z.infer<typeof SentenceElementSchema>;
 
 export type BackgroundTransitionType = z.infer<
   typeof BackgroundTransitionTypeSchema

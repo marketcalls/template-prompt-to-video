@@ -11,15 +11,19 @@ export const Word: React.FC<{
 }> = ({ enterProgress, text, stroke }) => {
   const { fontFamily } = loadFont();
   const { width } = useVideoConfig();
-  const desiredFontSize = 120;
+  const desiredFontSize = 140;
 
   const fittedText = fitText({
     fontFamily,
     text,
-    withinWidth: width * 0.8,
+    withinWidth: width * 0.85,
   });
 
   const fontSize = Math.min(desiredFontSize, fittedText.fontSize);
+
+  // Karaoke style: bright yellow/gold with black stroke
+  const textColor = stroke ? "black" : "#FFD700"; // Gold color for fill
+  const strokeWidth = stroke ? "24px" : undefined;
 
   return (
     <AbsoluteFill
@@ -27,22 +31,28 @@ export const Word: React.FC<{
         justifyContent: "center",
         alignItems: "center",
         top: undefined,
-        bottom: 350,
-        height: 150,
+        bottom: 300,
+        height: 180,
       }}
     >
       <div
         style={{
           fontSize,
-          color: "white",
-          WebkitTextStroke: stroke ? "20px black" : undefined,
+          color: textColor,
+          WebkitTextStroke: stroke ? `${strokeWidth} black` : undefined,
+          paintOrder: stroke ? "stroke fill" : undefined,
           transform: makeTransform([
-            scale(interpolate(enterProgress, [0, 1], [0.8, 1])),
-            translateY(interpolate(enterProgress, [0, 1], [50, 0])),
+            scale(interpolate(enterProgress, [0, 1], [0.7, 1])),
+            translateY(interpolate(enterProgress, [0, 1], [30, 0])),
           ]),
           fontFamily,
           textTransform: "uppercase",
           textAlign: "center",
+          fontWeight: "bold",
+          letterSpacing: "2px",
+          textShadow: stroke
+            ? "4px 4px 8px rgba(0,0,0,0.8), -2px -2px 4px rgba(0,0,0,0.5)"
+            : "2px 2px 4px rgba(0,0,0,0.5)",
         }}
       >
         {text}
