@@ -13,6 +13,7 @@ import {
   getGenerateStoryPrompt,
   openaiStructuredCompletion,
   setApiKey,
+  setFalKey,
 } from "./service";
 import {
   ContentItemWithDetails,
@@ -26,11 +27,11 @@ import * as fs from "fs";
 import * as path from "path";
 import { createTimeLineFromStoryWithDetails } from "./timeline";
 
-dotenv.config({ quiet: true });
+dotenv.config({ override: true });
 
 interface GenerateOptions {
   apiKey?: string;
-  elevenlabsApiKey?: string;
+  falKey?: string;
   title?: string;
   topic?: string;
 }
@@ -87,8 +88,7 @@ class ContentFS {
 async function generateStory(options: GenerateOptions) {
   try {
     let apiKey = options.apiKey || process.env.OPENAI_API_KEY;
-    let elevenlabsApiKey =
-      options.elevenlabsApiKey || process.env.ELEVENLABS_API_KEY;
+    let falKey = options.falKey || process.env.FAL_KEY;
 
     if (!apiKey) {
       const response = await prompts({
@@ -106,21 +106,20 @@ async function generateStory(options: GenerateOptions) {
       apiKey = response.apiKey;
     }
 
-    if (!elevenlabsApiKey) {
+    if (!falKey) {
       const response = await prompts({
         type: "password",
-        name: "elevenlabsApiKey",
-        message: "Enter your ElevenLabs API key:",
-        validate: (value) =>
-          value.length > 0 || "ElevenLabs API key is required",
+        name: "falKey",
+        message: "Enter your Fal.ai API key:",
+        validate: (value) => value.length > 0 || "Fal.ai API key is required",
       });
 
-      if (!response.elevenlabsApiKey) {
-        console.log(chalk.red("API key is required. Exiting..."));
+      if (!response.falKey) {
+        console.log(chalk.red("Fal.ai API key is required. Exiting..."));
         process.exit(1);
       }
 
-      elevenlabsApiKey = response.elevenlabsApiKey;
+      falKey = response.falKey;
     }
 
     let { title, topic } = options;
@@ -162,6 +161,7 @@ async function generateStory(options: GenerateOptions) {
 
     const storySpinner = ora("Generating story...").start();
     setApiKey(apiKey!);
+    setFalKey(falKey!);
     const storyRes = await openaiStructuredCompletion(
       getGenerateStoryPrompt(title!, topic!),
       StoryScript,
@@ -207,7 +207,6 @@ async function generateStory(options: GenerateOptions) {
       imagesSpinner.text = `[${i * 2 + 2}/${storyWithDetails.content.length * 2}] Generating voice for ${storyItem.text}`;
       const timings = await generateVoice(
         storyItem.text,
-        elevenlabsApiKey!,
         contentFs.getAudioPath(storyItem.uid),
       );
       storyItem.audioTimestamps = timings;

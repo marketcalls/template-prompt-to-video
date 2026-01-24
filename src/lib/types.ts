@@ -1,5 +1,10 @@
-import { CharacterAlignmentResponseModel } from "@elevenlabs/elevenlabs-js/api";
 import { z } from "zod";
+
+export interface CharacterAlignmentResponseModel {
+  characters: string[];
+  characterStartTimesSeconds: number[];
+  characterEndTimesSeconds: number[];
+}
 
 const BackgroundTransitionTypeSchema = z.union([
   z.literal("fade"),

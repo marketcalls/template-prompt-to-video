@@ -1,4 +1,4 @@
-import { AbsoluteFill, Sequence, staticFile, useVideoConfig } from "remotion";
+import { AbsoluteFill, Sequence, Series, staticFile, useVideoConfig } from "remotion";
 import { z } from "zod";
 import { Audio } from "@remotion/media";
 import { TimelineSchema } from "../lib/types";
@@ -6,7 +6,7 @@ import { FPS, INTRO_DURATION } from "../lib/constants";
 import { loadFont } from "@remotion/google-fonts/BreeSerif";
 import { Background } from "./Background";
 import Subtitle from "./Subtitle";
-import { calculateFrameTiming, getAudioPath } from "../lib/utils";
+import { getAudioPath } from "../lib/utils";
 
 export const aiVideoSchema = z.object({
   timeline: TimelineSchema.nullable(),
@@ -21,11 +21,16 @@ export const AIVideo: React.FC<z.infer<typeof aiVideoSchema>> = ({
     throw new Error("Expected timeline to be fetched");
   }
 
-  const { id } = useVideoConfig();
+  const { id, fps } = useVideoConfig();
+
+  // Helper to convert ms to frames with intro offset
+  const msToFrame = (ms: number) => Math.round((ms * fps) / 1000) + INTRO_DURATION;
+  const msToDuration = (startMs: number, endMs: number) => Math.round(((endMs - startMs) * fps) / 1000);
 
   return (
     <AbsoluteFill style={{ backgroundColor: "white" }}>
-      <Sequence durationInFrames={INTRO_DURATION}>
+      {/* Intro Title */}
+      <Sequence durationInFrames={INTRO_DURATION} premountFor={fps}>
         <AbsoluteFill
           style={{
             justifyContent: "center",
@@ -54,56 +59,49 @@ export const AIVideo: React.FC<z.infer<typeof aiVideoSchema>> = ({
         </AbsoluteFill>
       </Sequence>
 
-      {timeline.elements.map((element, index) => {
-        const { startFrame, duration } = calculateFrameTiming(
-          element.startMs,
-          element.endMs,
-          { includeIntro: index === 0 },
-        );
+      {/* Background Images - Using Series for sequential playback */}
+      <Sequence from={INTRO_DURATION}>
+        <Series>
+          {timeline.elements.map((element, index) => {
+            const durationFrames = msToDuration(element.startMs, element.endMs);
+            return (
+              <Series.Sequence
+                key={`bg-${index}`}
+                durationInFrames={durationFrames}
+                premountFor={fps}
+              >
+                <Background project={id} item={element} />
+              </Series.Sequence>
+            );
+          })}
+        </Series>
+      </Sequence>
 
-        return (
-          <Sequence
-            key={`element-${index}`}
-            from={startFrame}
-            durationInFrames={duration}
-            premountFor={3 * FPS}
-          >
-            <Background project={id} item={element} />
-          </Sequence>
-        );
-      })}
-
+      {/* Subtitles - Using absolute positioning to sync with audio */}
       {timeline.text.map((element, index) => {
-        const { startFrame, duration } = calculateFrameTiming(
-          element.startMs,
-          element.endMs,
-          { addIntroOffset: true },
-        );
-
+        const startFrame = msToFrame(element.startMs);
+        const durationFrames = msToDuration(element.startMs, element.endMs);
         return (
           <Sequence
-            key={`element-${index}`}
+            key={`text-${index}`}
             from={startFrame}
-            durationInFrames={duration}
+            durationInFrames={Math.max(1, durationFrames)}
           >
-            <Subtitle key={index} text={element.text} />
+            <Subtitle text={element.text} />
           </Sequence>
         );
       })}
 
+      {/* Audio - Using absolute positioning to ensure sync */}
       {timeline.audio.map((element, index) => {
-        const { startFrame, duration } = calculateFrameTiming(
-          element.startMs,
-          element.endMs,
-          { addIntroOffset: true },
-        );
-
+        const startFrame = msToFrame(element.startMs);
+        const durationFrames = msToDuration(element.startMs, element.endMs);
         return (
           <Sequence
-            key={`element-${index}`}
+            key={`audio-${index}`}
             from={startFrame}
-            durationInFrames={duration}
-            premountFor={3 * FPS}
+            durationInFrames={durationFrames}
+            premountFor={fps}
           >
             <Audio src={staticFile(getAudioPath(id, element.audioUrl))} />
           </Sequence>

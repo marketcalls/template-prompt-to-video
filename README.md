@@ -9,7 +9,7 @@
 
 Using this template you can create high quality **AI videos for TikTok or Instagram**.
 
-It includes a CLI that will generate a story script, images and voiceover using OpenAI and ElevenLabs.
+It includes a CLI that will generate a story script, images and voiceover using OpenAI and Fal.ai (Flux for images, ElevenLabs for TTS).
 
 ## Getting started
 
@@ -47,18 +47,14 @@ Create .env file with following env vars (you can also find them in .env.example
 
 ```
 OPENAI_API_KEY=
-ELEVENLABS_API_KEY=
+FAL_KEY=
 ```
 
 If you don't create an env file, you will be prompted for these variables when using CLI.
 
 **Select voice**
 
-In [`generateVoice()`](cli/service.ts) replace the voice id from ElevenLabs with the one you like. You can use their API for this. Alternatively, you can open any voice on their website and extract the Voice ID from the url (id comes after `voiceId=`).
-
-```console
-https://elevenlabs.io/app/voice-library?voiceId=aTxZrSrp47xsP6Ot4Kgd
-```
+In [`generateVoice()`](cli/service.ts) you can change the voice name. Available voices include: Brian, Alice, Bill, Callum, Charlie, Charlotte, Chris, Daniel, Eric, George, Jessica, Laura, Liam, Lily, Matilda, River, Roger, Sarah, Will.
 
 **Generate story timeline**
 

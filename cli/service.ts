@@ -1,9 +1,13 @@
 import z from "zod";
 import * as fs from "fs";
-import { ElevenLabsClient } from "@elevenlabs/elevenlabs-js";
-import { CharacterAlignmentResponseModel } from "@elevenlabs/elevenlabs-js/api";
+import { fal } from "@fal-ai/client";
 import { IMAGE_HEIGHT, IMAGE_WIDTH } from "../src/lib/constants";
-import { zodToJsonSchema } from "zod-to-json-schema";
+
+export interface CharacterAlignmentResponseModel {
+  characters: string[];
+  characterStartTimesSeconds: number[];
+  characterEndTimesSeconds: number[];
+}
 
 let apiKey: string | null = null;
 
@@ -11,13 +15,14 @@ export const setApiKey = (key: string) => {
   apiKey = key;
 };
 
+export const setFalKey = (key: string) => {
+  fal.config({ credentials: key });
+};
+
 export const openaiStructuredCompletion = async <T>(
   prompt: string,
   schema: z.ZodType<T>,
 ): Promise<T> => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const jsonSchema = zodToJsonSchema(schema) as any;
-
   const res = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
     headers: {
@@ -26,20 +31,8 @@ export const openaiStructuredCompletion = async <T>(
     },
     body: JSON.stringify({
       model: "gpt-4.1",
-      messages: [{ role: "user", content: prompt }],
-      response_format: {
-        type: "json_schema",
-        json_schema: {
-          name: "response",
-          schema: {
-            type: jsonSchema.type || "object",
-            properties: jsonSchema.properties,
-            required: jsonSchema.required,
-            additionalProperties: jsonSchema.additionalProperties ?? false,
-          },
-          strict: true,
-        },
-      },
+      messages: [{ role: "user", content: prompt + "\n\nRespond with valid JSON only." }],
+      response_format: { type: "json_object" },
     }),
   });
 
@@ -56,14 +49,9 @@ export const openaiStructuredCompletion = async <T>(
   return schema.parse(parsed);
 };
 
-function saveUint8ArrayToPng(uint8Array: Uint8Array, filePath: string) {
-  const buffer = Buffer.from(uint8Array);
-  fs.writeFileSync(filePath, buffer as Uint8Array);
-}
-
 export const generateAiImage = async ({
   prompt,
-  path,
+  path: outputPath,
   onRetry,
 }: {
   prompt: string;
@@ -74,71 +62,75 @@ export const generateAiImage = async ({
   let attempt = 0;
   let lastError: Error | null = null;
 
+  // Add minimalistic style prefix to prompt
+  const styledPrompt = `Minimalistic, clean editorial illustration style. Simple composition with negative space. No text or UI elements. ${prompt}`;
+
   while (attempt < maxRetries) {
-    const res = await fetch("https://api.openai.com/v1/images/generations", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "dall-e-3",
-        prompt,
-        size: `${IMAGE_WIDTH}x${IMAGE_HEIGHT}`,
-        response_format: "b64_json",
-      }),
-    });
+    try {
+      const result = await fal.subscribe("fal-ai/flux-2-pro", {
+        input: {
+          prompt: styledPrompt,
+          image_size: "portrait_16_9",
+          safety_tolerance: "2",
+          output_format: "png",
+        },
+      });
 
-    if (res.ok) {
-      const data = await res.json();
-      const buffer = Buffer.from(data.data[0].b64_json, "base64");
-      const uint8Array = new Uint8Array(buffer);
-
-      saveUint8ArrayToPng(uint8Array, path);
+      const imageUrl = result.data.images[0].url;
+      const response = await fetch(imageUrl);
+      const arrayBuffer = await response.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+      fs.writeFileSync(outputPath, buffer as Uint8Array);
       return;
-    } else {
+    } catch (error) {
       lastError = new Error(
-        `OpenAI error (attempt ${attempt + 1}): ${await res.text()}`,
+        `Fal.ai error (attempt ${attempt + 1}): ${error instanceof Error ? error.message : String(error)}`,
       );
       attempt++;
       if (attempt < maxRetries) {
-        // Wait 1 second before retrying
         await new Promise((resolve) => setTimeout(resolve, 1000));
       }
       onRetry(attempt);
     }
   }
 
-  // Ran out of retries, throw the last error
   throw lastError!;
 };
 
 export const getGenerateStoryPrompt = (title: string, topic: string) => {
   const prompt = `Write a short story with title [${title}] (its topic is [${topic}]).
-   You must follow best practices for great storytelling. 
-   The script must be 8-10 sentences long. 
-   Story events can be from anywhere in the world, but text must be translated into English language. 
-   Result result without any formatting and title, as one continuous text. 
-   Skip new lines.`;
+   You must follow best practices for great storytelling.
+   The script must be 8-10 sentences long.
+   Story events can be from anywhere in the world, but text must be translated into English language.
+   Result result without any formatting and title, as one continuous text.
+   Skip new lines.
+
+   Return your response as JSON in this exact format:
+   {"text": "your story text here"}`;
 
   return prompt;
 };
 
 export const getGenerateImageDescriptionPrompt = (storyText: string) => {
   const prompt = `You are given story text.
-  Generate (in English) 5-8 very detailed image descriptions  for this story. 
-  Return their description as json array with story sentences matched to images. 
+  Generate (in English) 5-8 image descriptions for this story.
   Story sentences must be in the same order as in the story and their content must be preserved.
   Each image must match 1-2 sentence from the story.
-  Images must show story content in a way that is visually appealing and engaging, not just characters.
-  Give output in json format:
 
-  [
-    {
-      "text": "....",
-      "imageDescription": "..."
-    }
-  ]
+  IMPORTANT - MINIMALISTIC IMAGE STYLE:
+  - Keep descriptions CLEAN and SIMPLE
+  - Focus on ONE clear subject per image
+  - Use simple compositions with plenty of negative space
+  - Prefer abstract or symbolic representations
+  - Use solid colors, soft gradients, or simple backgrounds
+  - Style: Modern, clean, editorial illustration
+  - NO text, numbers, or UI elements in images
+  - NO crowded scenes or busy backgrounds
+  - NO screens with fake text or gibberish characters
+  - Think: Apple-style minimalism, not stock photography
+
+  Return your response as JSON in this exact format:
+  {"result": [{"text": "sentence from story", "imageDescription": "minimalistic image description"}]}
 
   <story>
   ${storyText}
@@ -147,31 +139,42 @@ export const getGenerateImageDescriptionPrompt = (storyText: string) => {
   return prompt;
 };
 
-const saveBase64ToMp3 = (data: string, path: string) => {
-  const buffer = Buffer.from(data, "base64");
-  fs.writeFileSync(path, buffer as Uint8Array);
-};
-
 export const generateVoice = async (
   text: string,
-  apiKey: string,
-  path: string,
+  outputPath: string,
 ): Promise<CharacterAlignmentResponseModel> => {
-  const client = new ElevenLabsClient({
-    environment: "https://api.elevenlabs.io",
-    apiKey,
+  const result = await fal.subscribe("fal-ai/elevenlabs/tts/eleven-v3", {
+    input: {
+      text,
+      voice: "Brian",
+      stability: 0.5,
+      similarity_boost: 0.75,
+      speed: 1,
+    },
   });
 
-  const voiceId = "21m00Tcm4TlvDq8ikWAM";
+  const audioUrl = result.data.audio.url;
+  const response = await fetch(audioUrl);
+  const arrayBuffer = await response.arrayBuffer();
+  const buffer = Buffer.from(arrayBuffer);
+  fs.writeFileSync(outputPath, buffer as Uint8Array);
 
-  const data = await client.textToSpeech.convertWithTimestamps(voiceId, {
-    text,
-  });
+  // Generate estimated timestamps based on audio duration and text length
+  const audioDurationSeconds = result.data.audio.duration || text.length * 0.06;
+  const characters = text.split("");
+  const timePerChar = audioDurationSeconds / characters.length;
 
-  if (!data.alignment || !data.alignment.characterEndTimesSeconds.length) {
-    throw new Error("ElevenLabs response missing timestamps");
+  const characterStartTimesSeconds: number[] = [];
+  const characterEndTimesSeconds: number[] = [];
+
+  for (let i = 0; i < characters.length; i++) {
+    characterStartTimesSeconds.push(i * timePerChar);
+    characterEndTimesSeconds.push((i + 1) * timePerChar);
   }
 
-  saveBase64ToMp3(data.audioBase64, path);
-  return data.alignment;
+  return {
+    characters,
+    characterStartTimesSeconds,
+    characterEndTimesSeconds,
+  };
 };

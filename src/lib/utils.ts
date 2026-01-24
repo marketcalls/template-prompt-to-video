@@ -8,28 +8,13 @@ export const loadTimelineFromFile = async (filename: string) => {
   const timeline = json as Timeline;
   timeline.elements.sort((a, b) => a.startMs - b.startMs);
 
-  const lengthMs =
-    timeline.elements.length > 0
-      ? timeline.elements[timeline.elements.length - 1].endMs / 1000
-      : 0;
-  const lengthFrames = Math.floor(lengthMs * FPS);
+  // Calculate total duration from the last element
+  const lastElement = timeline.elements[timeline.elements.length - 1];
+  const contentDurationMs = lastElement ? lastElement.endMs : 0;
+  const contentDurationFrames = Math.ceil((contentDurationMs / 1000) * FPS);
+  const lengthFrames = INTRO_DURATION + contentDurationFrames;
 
   return { timeline, lengthFrames };
-};
-
-export const calculateFrameTiming = (
-  startMs: number,
-  endMs: number,
-  options: { includeIntro?: boolean; addIntroOffset?: boolean } = {},
-) => {
-  const { includeIntro = false, addIntroOffset = false } = options;
-
-  const startFrame =
-    (startMs * FPS) / 1000 + (addIntroOffset ? INTRO_DURATION : 0);
-  const duration =
-    ((endMs - startMs) * FPS) / 1000 + (includeIntro ? INTRO_DURATION : 0);
-
-  return { startFrame, duration };
 };
 
 export const calculateBlur = ({

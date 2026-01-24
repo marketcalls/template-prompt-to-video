@@ -12,6 +12,7 @@
   "repository": {},
   "license": "UNLICENSED",
   "dependencies": {
+    "@fal-ai/client": "^1.8.4",
     "@remotion/animation-utils": "^4.0.0",
     "@remotion/cli": "^4.0.0",
     "@remotion/google-fonts": "^4.0.0",
@@ -21,10 +22,9 @@
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "remotion": "^4.0.0",
-    "zod": "3.22.3"
+    "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@elevenlabs/elevenlabs-js": "^2.20.0",
     "@remotion/eslint-config-flat": "^4.0.0",
     "@types/prompts": "^2.4.9",
     "@types/react": "19.2.7",
