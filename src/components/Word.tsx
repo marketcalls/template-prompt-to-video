@@ -31,8 +31,8 @@ export const Word: React.FC<{
         justifyContent: "center",
         alignItems: "center",
         top: undefined,
-        bottom: 300,
-        height: 180,
+        bottom: 80,
+        height: 120,
       }}
     >
       <div

@@ -69,7 +69,7 @@ export const generateAiImage = async ({
       const result = await fal.subscribe("fal-ai/flux-2-pro", {
         input: {
           prompt: styledPrompt,
-          image_size: "portrait_16_9",
+          image_size: "landscape_16_9",
           safety_tolerance: "2",
           output_format: "png",
         },
@@ -97,9 +97,9 @@ export const generateAiImage = async ({
 };
 
 export const getGenerateStoryPrompt = (title: string, topic: string) => {
-  const prompt = `Write a short story with title [${title}] (its topic is [${topic}]).
+  const prompt = `Write an engaging educational story with title [${title}] (its topic is [${topic}]).
    You must follow best practices for great storytelling.
-   The script must be 8-10 sentences long.
+   The script must be 15-20 sentences long for a detailed explainer video.
    Story events can be from anywhere in the world, but text must be translated into English language.
    Result result without any formatting and title, as one continuous text.
    Skip new lines.
@@ -118,9 +118,9 @@ export const getGenerateStoryPrompt = (title: string, topic: string) => {
 
 export const getGenerateImageDescriptionPrompt = (storyText: string) => {
   const prompt = `You are given story text.
-  Generate (in English) 5-8 image descriptions for this story.
+  Generate (in English) 10-15 image descriptions for this story.
   Story sentences must be in the same order as in the story and their content must be preserved.
-  Each image must match 1-2 sentence from the story.
+  Each image must match 1-2 sentences from the story.
 
   IMPORTANT - COMIC BOOK STYLE WITH CHARACTERS:
   - Style: Vibrant comic book illustration, graphic novel aesthetic
