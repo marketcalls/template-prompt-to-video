@@ -1,5 +1,6 @@
 import {
   AbsoluteFill,
+  Audio,
   Img,
   interpolate,
   spring,
@@ -2768,7 +2769,11 @@ export const OpenAlgoVideo: React.FC = () => {
   const mediumTransition = 15;  // Slowed down
 
   return (
-    <TransitionSeries>
+    <>
+      {/* Background Music */}
+      <Audio src={staticFile("openalgo/music.mp3")} volume={1} startFrom={30} />
+
+      <TransitionSeries>
       {/* Logo Text */}
       <TransitionSeries.Sequence durationInFrames={SCENE_SHORT}>
         <Scene_Logo />
@@ -3168,6 +3173,7 @@ export const OpenAlgoVideo: React.FC = () => {
         <Scene_FinalCTA />
       </TransitionSeries.Sequence>
     </TransitionSeries>
+    </>
   );
 };
 
