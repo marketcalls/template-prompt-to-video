@@ -7,7 +7,18 @@
       "Bash(npx tsx:*)",
       "Bash(npm run dev:*)",
       "Bash(timeout:*)",
-      "WebSearch"
+      "WebSearch",
+      "Bash(npm run build:*)",
+      "Bash(npx remotion render:*)",
+      "Bash(set NODE_OPTIONS=--max-old-space-size=8192)",
+      "Bash(dir:*)",
+      "Bash(node -e:*)",
+      "Bash(npx ts-node:*)",
+      "Bash(npx tsc:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push)",
+      "Bash(set NODE_OPTIONS=--max-old-space-size=16384)"
     ]
   }
 }

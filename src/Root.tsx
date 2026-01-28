@@ -1,5 +1,6 @@
 import { Composition, getStaticFiles } from "remotion";
 import { AIVideo, aiVideoSchema } from "./components/AIVideo";
+import { OpenAlgoVideo } from "./OpenAlgo/OpenAlgoVideo";
 import { FPS, INTRO_DURATION } from "./lib/constants";
 import { getTimelinePath, loadTimelineFromFile } from "./lib/utils";
 
@@ -11,6 +12,17 @@ export const RemotionRoot: React.FC = () => {
 
   return (
     <>
+      {/* OpenAlgo Promo Video */}
+      <Composition
+        id="OpenAlgoPromo"
+        component={OpenAlgoVideo}
+        fps={30}
+        width={1920}
+        height={1080}
+        durationInFrames={3600}
+      />
+
+      {/* Dynamic timeline-based videos */}
       {timelines.map((storyName) => (
         <Composition
           key={storyName}
