@@ -384,7 +384,7 @@ const Scene_LiveProjects: React.FC = () => {
             opacity: interpolate(labelProgress, [0, 1], [0, 1]),
           }}
         >
-          Projects Submitted
+          Projects Created
         </div>
 
         <div
