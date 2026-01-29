@@ -1,6 +1,7 @@
 import { Composition, getStaticFiles } from "remotion";
 import { AIVideo, aiVideoSchema } from "./components/AIVideo";
 import { OpenAlgoVideo } from "./OpenAlgo/OpenAlgoVideo";
+import { FOSSHackVideo } from "./FOSSHack/FOSSHackVideo";
 import { FPS, INTRO_DURATION } from "./lib/constants";
 import { getTimelinePath, loadTimelineFromFile } from "./lib/utils";
 
@@ -20,6 +21,16 @@ export const RemotionRoot: React.FC = () => {
         width={1920}
         height={1080}
         durationInFrames={2700}
+      />
+
+      {/* FOSS Hack 2026 Promo Video */}
+      <Composition
+        id="FOSSHack2026"
+        component={FOSSHackVideo}
+        fps={30}
+        width={1920}
+        height={1080}
+        durationInFrames={1200}
       />
 
       {/* Dynamic timeline-based videos */}

@@ -880,9 +880,55 @@ const Scene_LogoReveal: React.FC = () => {
 };
 
 const Scene_Logo: React.FC = () => {
+  const frame = useCurrentFrame();
+  const { fps } = useVideoConfig();
+
+  // Hold complete state for first 15 frames (0.5s) for thumbnail, then animate
+  const holdFrames = 15;
+  const animationFrame = Math.max(0, frame - holdFrames);
+
+  const words = ["Open", "Algo"];
+  const colors = [BRAND.purple, BRAND.green];
+
   return (
     <AbsoluteFill style={{ background: SLIDES.dark.bg, justifyContent: "center", alignItems: "center" }}>
-      <AnimatedWords words={["Open", "Algo"]} colors={[BRAND.purple, BRAND.green]} fontSize={180} stagger={8} />
+      <div
+        style={{
+          display: "flex",
+          flexWrap: "wrap",
+          justifyContent: "center",
+          alignItems: "center",
+          gap: "0 24px",
+        }}
+      >
+        {words.map((word, i) => {
+          // Show fully visible from frame 0 for thumbnail
+          const isInHold = frame < holdFrames;
+          const progress = isInHold ? 1 : spring({
+            frame: animationFrame - i * 8,
+            fps,
+            config: { damping: 12, stiffness: 200 },
+          });
+
+          return (
+            <span
+              key={`${word}-${i}`}
+              style={{
+                fontSize: 180,
+                fontWeight: 800,
+                fontFamily,
+                color: colors[i],
+                transform: `translateY(0px) scale(1)`,
+                opacity: 1,
+                display: "inline-block",
+                textShadow: `0 0 60px ${colors[i]}60`,
+              }}
+            >
+              {word}
+            </span>
+          );
+        })}
+      </div>
     </AbsoluteFill>
   );
 };
